@@ -34,9 +34,9 @@ async function run() {
 
     app.get('/all-appointment/:id', async (req, res) => {
       const { id } = req.params;
-      const query = {_id: new ObjectId(id)}
+      const query = {_id: id}
       const result = await appointCollection.findOne(query)
-      res.send(result);
+      res.json(result);
     })
 
     app.get('/featured', async (req, res) => {
