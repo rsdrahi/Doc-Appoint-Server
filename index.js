@@ -7,6 +7,7 @@ const cors = require('cors')
 dotenv.config();
 const app = express()
 app.use(cors());
+app.use(express.json());
 
 const uri = process.env.MONGODB_URI;
 const PORT = process.env.PORT;
@@ -25,6 +26,7 @@ async function run() {
     await client.connect();
     const db = client.db('docappoint')
     const appointCollection = db.collection('allAppointment');
+    const bookCollection = db.collection('bookDoctorAppointment')
 
     app.get('/all-appointment', async (req, res) => {
       const cursor = appointCollection.find()
@@ -33,15 +35,25 @@ async function run() {
     })
 
     app.get('/all-appointment/:id', async (req, res) => {
-      const { id } = req.params;
-      const query = {_id: id}
+      const { id } = await req.params;
+      console.log(id, "Id");
+      const query = { _id: new ObjectId(id) }
+      console.log(query, 'query');
       const result = await appointCollection.findOne(query)
-      res.json(result);
+      console.log(result, "result");
+      res.send(result);
+    })
+
+    app.post('/book-appointment', async (req, res) => {
+      const appointment = req.body;
+      console.log(appointment, "appointment");
+      const result = await bookCollection.insertOne(appointment);
+      res.send(result);
     })
 
     app.get('/featured', async (req, res) => {
       const result = await appointCollection.find().limit(3).toArray();
-      res.send(result);
+      res.json(result);
     })
 
 
