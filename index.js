@@ -3,7 +3,8 @@
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require('express')
 const dotenv = require('dotenv')
-const cors = require('cors')
+const cors = require('cors');
+const { createRemoteJWKSet, jwtVerify } = require('jose-cjs');
 dotenv.config();
 const app = express()
 app.use(cors());
@@ -20,6 +21,29 @@ const client = new MongoClient(uri, {
   }
 });
 
+const JWKS = createRemoteJWKSet(
+  new URL('http://localhost:3000/api/auth/jwks')
+)
+
+const verifyToken = async (req, res, next) => {
+  const authHeader = req?.headers.authorization
+  if (!authHeader) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  const token = authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  // console.log(token, "Token");
+  try {
+    const { payload } = await jwtVerify(token, JWKS)
+  console.log(payload);
+  next();
+  } catch (error) {
+    return res.status(403).json({message: "Forbidden"})
+  }
+}
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -35,7 +59,7 @@ async function run() {
       res.send(result);
     })
 
-    app.get('/all-appointment/:id', async (req, res) => {
+    app.get('/all-appointment/:id', verifyToken,  async (req, res) => {
       const { id } = await req.params;
       // console.log(id, "Id");
       const query = { _id: id }
