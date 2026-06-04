@@ -27,6 +27,7 @@ async function run() {
     const db = client.db('docappoint')
     const appointCollection = db.collection('allAppointment');
     const bookCollection = db.collection('bookDoctorAppointment');
+    const userCollection = db.collection('user');
 
     app.get('/all-appointment', async (req, res) => {
       const cursor = appointCollection.find()
@@ -36,11 +37,11 @@ async function run() {
 
     app.get('/all-appointment/:id', async (req, res) => {
       const { id } = await req.params;
-      console.log(id, "Id");
+      // console.log(id, "Id");
       const query = { _id: id }
-      console.log(query, 'query');
+      // console.log(query, 'query');
       const result = await appointCollection.findOne(query)
-      console.log(result, "result");
+      // console.log(result, "result");
       res.send(result);
     })
 
@@ -54,6 +55,33 @@ async function run() {
     app.get('/book-appointment', async (req, res) => {
       const result = await bookCollection.find().toArray();
       res.send(result);
+    })
+
+    app.patch('/book-appointment/:id', async (req, res) => {
+      const { id } = req.params;
+      const updataData = req.body
+      const result = await bookCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {$set: updataData}
+      )
+      res.send(result);
+    })
+
+    app.delete('/book-appointment/:id', async (req, res) => {
+      const { id } = await req.params;
+      const query = {_id: new ObjectId(id) }
+      const result = await bookCollection.deleteOne(query);
+      res.send(result);
+    })
+
+    app.patch('/user/update/:email', async (req, res) => {
+      const email = req.params.email;
+      const { name, image } = req.body;
+      const result = await userCollection.updateOne(
+        { email },
+        { $set: { name, image } }
+      );
+      res.send(result)
     })
 
     app.get('/featured', async (req, res) => {
